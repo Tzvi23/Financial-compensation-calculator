@@ -20,3 +20,11 @@ class parameters:
         if args is not None:
             for year in range(1, len(args) + 1):
                 self.discount_rates[year] = args[year - 1]
+
+    def __str__(self):
+        return 'Parameters: \n' + \
+                f'  Death probability: {self.prob_death}\n' + \
+                f'  Resignation probability: {self.resignation}\n' + \
+                f'  Dismissal probability: {self.dismissal} \n' + \
+                f'  Discount Rates: {self.discount_rates} \n' + \
+                f'  Pay rise rate: {self.pay_rise_rate}'

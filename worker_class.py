@@ -5,13 +5,20 @@ Contains the basic data regarding each worker
 
 
 class worker:
-    def __init__(self, w_id=None, name=None, prop=None, a_14=None, seniority=None, wage=None):
+    def __init__(self, w_id=None, name=None, prop=None, a_14=1, complex_a_14=False, seniority=None, wage=None, retirementAge=64):
         self.id = w_id
         self.name = name
         self.property = prop  # Int
-        self.article14 = a_14  # Percentage (float)
+        if complex_a_14 is False:
+            if a_14 != 1:
+                self.article14 = 1 - a_14  # Percentage (float)
+            else:
+                self.article14 = a_14
+        else:
+            self.article14 = a_14  # Except tuples ((years, percentage), (years, percentage) ,.. )
         self.seniority = seniority  # Int - number of years on the job
         self.wage = wage  # Int/Float
+        self.retirementAge = retirementAge
 
     # region Setters
     def set_id(self, w_id):
