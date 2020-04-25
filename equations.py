@@ -1,8 +1,19 @@
 from sympy import *
+from print_colors import col
 
 
-# Current compensation value
+def print_res(message, res):
+    """ Prints the result with color """
+    print(f'{col.OKBLUE}{message}: {res}{col.ENDC}')
+
+
+# region <!--- PART 1 : Current compensation value  ---!>
 def calculate_current_compensation_value(worker, param):
+    """
+    Calculating the current compensation value based on long equation.
+    To build the final equation the function uses 3 part equation.
+    After the calculation finished the results is set to worker object - worker.CCV
+    """
     LS, SEN, SGR, RET, DISR, t, p, q, ART14_1 = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1')
     part1 = LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p**t * q) / ((1 + DISR) ** (t + 0.5)))
     # print(part1)
@@ -46,12 +57,79 @@ def calculate_current_compensation_value(worker, param):
     # endregion
 
     formula = part1 + part2 + part3
-    print(formula)
+    # print(formula)
     est = 0
     for c_t in range(worker.retirementAge):
         sub_dict[t] = c_t  # Update t value
         sub_dict[DISR] = param.discount_rates[c_t + 1]  # Update discount rate value by params values
         res = float(formula.subs(sub_dict))  # Calculate value
-        print(res)
+        # print(res)
         est += res  # sum all values
+
+    print_res('Calculated CCV - Current Compensation Value', est)
+    worker.CCV = est
     return est
+# endregion
+
+
+# region <!--- PART2 : Current service cost ---!>
+def current_service_cost(worker, partOfYear):
+    """
+    Calculates the service cost.
+    :param worker: Worker object with all the specific worker data [Worker obj]
+    :param partOfYear: What part of the year the worker worked [float]
+    After the calculation finished the results is set to worker object - worker.CSC
+    """
+    if worker.article14 == 1:
+        print(f'{col.OKGREEN}For worker with ARTICLE 14  = 100% cannot compute Current Service Cost {col.ENDC}')
+        return
+
+    if worker.CCV == -1:
+        raise ValueError('Current compensation value Needed - use calculate_current_compensation_value function')
+
+    # Actuarial factor - AF
+    CCV, LS, SEN, ART14 = symbols('Current_Compensation_Value Last_Salary Seniority Article14')
+    AF_RES = (CCV) / (LS * SEN * (1 - ART14))
+
+    # Current Service Cost - CSC
+    POY, AF = symbols('Part_Of_Year Actuarial_Factor')
+    CSC = LS * POY * (1 - ART14) * AF
+
+    AF_dict = {
+        LS: worker.wage,
+        SEN: worker.seniority,
+        ART14: worker.article14,
+        CCV: worker.CCV
+    }
+
+    # Calculation results of Actuarial factor
+    CALC_AF = AF_RES.subs(AF_dict)
+
+    CSC_dict = {
+        LS: worker.wage,
+        POY: partOfYear,
+        ART14: worker.article14,
+        AF: CALC_AF
+    }
+
+    # Calculate the total cost
+    COST = CSC.subs(CSC_dict)
+    print_res('Calculated CSC - Current Service Cost', COST)
+    worker.CSC = COST
+    return COST
+# endregion
+
+# region <!--- PART3 : Interest (Capitalization) ---!>
+# endregion
+
+# region <!--- PART3 : Interest (Capitalization) ---!>
+# endregion
+
+# region <!--- PART4 : Benefits paid ---!>
+# endregion
+
+# region <!--- PART5 : Actuarial losses ---!>
+# endregion
+
+# region <!--- PART6 : Present value Commitment to closing balance ---!>
+# endregion

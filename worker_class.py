@@ -9,7 +9,8 @@ class worker:
         self.id = w_id
         self.name = name
         self.property = prop  # Int
-        if complex_a_14 is False:
+        self.complex_a_14 = complex_a_14
+        if self.complex_a_14 is False:
             if a_14 != 1:
                 self.article14 = 1 - a_14  # Percentage (float)
             else:
@@ -19,6 +20,10 @@ class worker:
         self.seniority = seniority  # Int - number of years on the job
         self.wage = wage  # Int/Float
         self.retirementAge = retirementAge
+
+        # Calculations Results
+        self.CCV = -1  # Current Compensation Value
+        self.CSC = -1  # Current Service Cost
 
     # region Setters
     def set_id(self, w_id):
