@@ -3,16 +3,16 @@ from sympy import *
 
 # Current compensation value
 def calculate_current_compensation_value(worker, param):
-    LS, SEN, SGR, RET, DISR, t, p, q, ART14 = symbols('LastSalary Seniority Salary_Growth_Rate retirement_age Discount_Rate t p q Article14')
-    part1 = LS * SEN * ART14 * ((((1 + SGR) ** (t + 0.5)) * p**t * q) / ((1 + DISR) ** (t + 0.5)))
+    LS, SEN, SGR, RET, DISR, t, p, q, ART14_1 = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1')
+    part1 = LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p**t * q) / ((1 + DISR) ** (t + 0.5)))
     # print(part1)
 
     POS, RES = symbols('Property Resignation')
     part2 = POS * p * RES
     # print(part2)
 
-    d = symbols('death')
-    part3 = LS * SEN * (((1 + SGR) ** (t + 0.5) * p ** t * d) / ((1 + DISR) ** (t + 0.5)))
+    d, SEN2, ART14_2 = symbols('death Seniority2 Article14_1')
+    part3 = LS * SEN2 * ART14_2 * (((1 + SGR) ** (t + 0.5) * p ** t * d) / ((1 + DISR) ** (t + 0.5)))
     # print(part3)
 
     # region Load values
@@ -27,18 +27,22 @@ def calculate_current_compensation_value(worker, param):
     RES_VAL = param.resignation  # Resignation probability
     ART14_VAL = worker.article14  # article 14 percentage
 
-    sub_dict = {
-        LS: LS_VAL,
-        SEN: SEN_VAL,
-        RET: RET_VAL,
-        SGR: SGR_VAL,
-        p: p_VAL,
-        q: q_VAL,
-        POS: POS_VAL,
-        d: d_VAL,
-        RES: RES_VAL,
-        ART14: ART14_VAL
-    }
+    sub_dict = dict()  # declaration
+    if worker.complex_a_14 is False:
+        sub_dict = {
+            LS: LS_VAL,
+            SEN: SEN_VAL,
+            SEN2: SEN_VAL,
+            RET: RET_VAL,
+            SGR: SGR_VAL,
+            p: p_VAL,
+            q: q_VAL,
+            POS: POS_VAL,
+            d: d_VAL,
+            RES: RES_VAL,
+            ART14_1: ART14_VAL,
+            ART14_2: ART14_VAL
+        }
     # endregion
 
     formula = part1 + part2 + part3

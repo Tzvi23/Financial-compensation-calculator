@@ -15,7 +15,7 @@ class worker:
             else:
                 self.article14 = a_14
         else:
-            self.article14 = a_14  # Except tuples ((years, percentage), (years, percentage) ,.. )
+            self.article14 = a_14  # Except tuples ((years, 1 - percentage), (years, 1 - percentage) ,.. )
         self.seniority = seniority  # Int - number of years on the job
         self.wage = wage  # Int/Float
         self.retirementAge = retirementAge
