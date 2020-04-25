@@ -6,6 +6,8 @@ def print_res(message, res):
     """ Prints the result with color """
     print(f'{col.OKBLUE}{message}: {res}{col.ENDC}')
 
+# region ========================= MAIN PART 1 =========================
+
 
 # region <!--- PART 1 : Current compensation value  ---!>
 def calculate_current_compensation_value(worker, param):
@@ -174,4 +176,68 @@ def calculate_closing_balance(workers):
             CB += worker.CCV
     print_res('Closing Balance: ', CB)
     return CB
+# endregion
+
+# endregion
+
+# region ========================= MAIN PART 2 =========================
+
+# region <!--- Part 1 Fair value of plan assets opening balance ---!>
+# endregion
+
+
+# region <!--- Part 2 Expected return on plan assets ---!>
+def calculate_expected_return(worker, FVP_OB_VAR, discount_Rate, deposit_to_plan, benefits_paid):
+    """
+    This function calculates for !one! worker.
+    :param worker: current one worker
+    :param FVP_OB_VAR: Fair value of plan assets opening balance
+    :param discount_Rate: Discount Rate
+    :param deposit_to_plan: Deposits to plan
+    :param benefits_paid: Benefits Paid
+    """
+    FVP_OB, DR, DP, BP = symbols('Fair_Value Discount_Rate Deposits_To_Plan Benefits_Paid')
+    eq = FVP_OB * DR + ((DP - BP) * (DR / 2))
+
+    eq_dict = {
+        # TODO define FVP_OB = ???
+        DR: discount_Rate,
+        DP: deposit_to_plan,
+        BP: benefits_paid
+    }
+
+    res = eq.subs(eq_dict)
+    print_res('Calculated expected return for one employee: ', res)
+
+    return res
+# endregion
+
+
+# region <!--- Part 3 Deposits to plan assets ---!>
+# TODO sum all deposits for all the workers
+# endregion
+
+
+# region <!--- Part 4 Benefits paid from plan assets ---!>
+# TODO sum all the benefits that been paid to workers that left
+# endregion
+
+
+# region <!--- Part 5 Actuarial gains (losses) ---!>
+def calculate_actuarial_gains(FVP_CB, FVP_OB, ERPS, DPA, BP):
+    """
+    :param FVP_CB: Fair value of plan assets closing balance
+    :param FVP_OB: Fair value of plan assets opening balance
+    :param ERPS: Expected return on plan assets
+    :param DPA: Deposits to plan assets
+    :param BP: Benefits Paid
+    """
+    res = FVP_CB - FVP_OB - ERPS - DPA + BP
+    print_res('Calculated Actuarial Gains: ', res)
+    return res
+# endregion
+
+
+# region <!--- Part 6 Fair value of plan assets closing balance ---!>
+# TODO sum all the assets for all the employees
 # endregion
