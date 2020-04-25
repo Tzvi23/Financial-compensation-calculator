@@ -3,7 +3,6 @@ class parameters:
         self.prob_death = death
         self.resignation = resignation
         self.dismissal = dismissal
-
         self.discount_rates = dict()
 
         self.pay_rise_rate = pay_rise

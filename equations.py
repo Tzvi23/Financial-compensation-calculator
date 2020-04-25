@@ -72,7 +72,7 @@ def calculate_current_compensation_value(worker, param):
 # endregion
 
 
-# region <!--- PART2 : Current service cost ---!>
+# region <!--- PART 2 : Current service cost ---!>
 def current_service_cost(worker, partOfYear):
     """
     Calculates the service cost.
@@ -119,17 +119,59 @@ def current_service_cost(worker, partOfYear):
     return COST
 # endregion
 
-# region <!--- PART3 : Interest (Capitalization) ---!>
+
+# region <!--- PART 3 : Interest (Capitalization) ---!>
+def calculate_interest(worker, param, benefits_paid, discount_rate):
+    # TODO change worker to workers => supposed to be calculation on number of workers just add a loop afterwards
+    """
+    # TODO check how the E(t) needed in the equation calc
+    Calculates the E(t) of the worker
+    worker.calc_service_expectancy(param.prob_death, param.resignation, param.dismissal, currentAge=20)
+    """
+
+    CCV, DR, CSC, BP = symbols('Current_Compensation_Value Discount_Rate Current_Service_Cost Benefits_Paid')
+    eq = (CCV * DR) + ((CSC - BP) * (DR / 2))
+
+    ci_dict = {
+        CCV: worker.CCV,
+        DR: discount_rate,
+        CSC: worker.CSC,
+        BP: benefits_paid
+    }
+
+    # For one worker
+    interest = eq.subs(ci_dict)
+    print_res('Current interest: ', interest)
+
+    return interest
 # endregion
 
-# region <!--- PART3 : Interest (Capitalization) ---!>
-# endregion
 
 # region <!--- PART4 : Benefits paid ---!>
+# TODO write function that sums all the benefits paid to all workers
 # endregion
+
 
 # region <!--- PART5 : Actuarial losses ---!>
+def calculate_actuarial_losses(CCCB, CCV, CSC, INTEREST, BP):
+    """
+    :param CCCB: Current Compensation Closing Balance
+    :param CCV: Current Compensation Values
+    :param CSC: Current Service Cost
+    :param INTEREST: Interest (Part3)
+    :param BP: Benefits Paid
+    :return: Actuarial Losses float value
+    """
+    return CCCB - CCV - CSC - INTEREST + BP
 # endregion
 
+
 # region <!--- PART6 : Present value Commitment to closing balance ---!>
+def calculate_closing_balance(workers):
+    CB = 0  # Closing Balance
+    for worker in workers:
+        if worker.CCV != -1:
+            CB += worker.CCV
+    print_res('Closing Balance: ', CB)
+    return CB
 # endregion
