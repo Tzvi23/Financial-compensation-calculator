@@ -1,3 +1,8 @@
+"""
+Not used anymore
+"""
+
+
 class parameters:
     def __init__(self, *args, death=0, resignation=0, dismissal=0, pay_rise=0):
         self.prob_death = death

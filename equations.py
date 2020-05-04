@@ -32,12 +32,12 @@ def calculate_current_compensation_value(worker, param):
     LS_VAL = worker.wage  # LastSalary
     SEN_VAL = worker.seniority  # Seniority
     RET_VAL = worker.retirementAge  # retirement_age
-    SGR_VAL = param.pay_rise_rate  # Salary_Growth_Rate
-    p_VAL = 1 - (param.dismissal + param.resignation + param.prob_death)  # p -  stay on the job probability
-    q_VAL = param.dismissal  # q - fired from the job probability
+    SGR_VAL = param.pay_rise  # Salary_Growth_Rate
+    p_VAL = 1 - (param.departure_probabilities(worker.age)[0] + param.departure_probabilities(worker.age)[1] + param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age])  # p -  stay on the job probability
+    q_VAL = param.departure_probabilities(worker.age)[0]  # q - fired from the job probability
     POS_VAL = worker.property  # Property
-    d_VAL = param.prob_death  # death probability
-    RES_VAL = param.resignation  # Resignation probability
+    d_VAL = param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age]  # death probability
+    RES_VAL = param.departure_probabilities(worker.age)[1]  # Resignation probability
     ART14_VAL = worker.article14  # article 14 percentage
 
     sub_dict = dict()  # declaration
@@ -61,9 +61,9 @@ def calculate_current_compensation_value(worker, param):
     formula = part1 + part2 + part3
     # print(formula)
     est = 0
-    for c_t in range(worker.retirementAge):
+    for c_t in range(worker.yearsToWork):
         sub_dict[t] = c_t  # Update t value
-        sub_dict[DISR] = param.discount_rates[c_t + 1]  # Update discount rate value by params values
+        sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
         res = float(formula.subs(sub_dict))  # Calculate value
         # print(res)
         est += res  # sum all values
@@ -150,7 +150,12 @@ def calculate_interest(worker, param, benefits_paid, discount_rate):
 
 
 # region <!--- PART4 : Benefits paid ---!>
-# TODO write function that sums all the benefits paid to all workers
+def calculate_benefits_paid(workers_list):
+    est = 0
+    for worker in workers_list:
+        est += worker.benefits_paid
+    print_res('Benefits Paid: ', est)
+    return est
 # endregion
 
 
