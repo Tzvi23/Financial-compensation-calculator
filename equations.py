@@ -100,7 +100,7 @@ def current_service_cost(worker, partOfYear):
     AF_dict = {
         LS: worker.wage,
         SEN: worker.seniority,
-        ART14: worker.article14,
+        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
         CCV: worker.CCV
     }
 
@@ -110,7 +110,7 @@ def current_service_cost(worker, partOfYear):
     CSC_dict = {
         LS: worker.wage,
         POY: partOfYear,
-        ART14: worker.article14,
+        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
         AF: CALC_AF
     }
 
@@ -123,26 +123,47 @@ def current_service_cost(worker, partOfYear):
 
 
 # region <!--- PART 3 : Interest (Capitalization) ---!>
-def calculate_interest(worker, param, benefits_paid, discount_rate):
+def calculate_interest_for_one_worker(worker, param):
     # TODO change worker to workers => supposed to be calculation on number of workers just add a loop afterwards
     """
     # TODO check how the E(t) needed in the equation calc
     Calculates the E(t) of the worker
     worker.calc_service_expectancy(param.prob_death, param.resignation, param.dismissal, currentAge=20)
     """
+    def get_current_age(cur_worker, cur_year):
+        return cur_year - cur_worker.birthday.year
+
+    # Calculate E(t) function
+    DIS, DEATH = symbols('dismissal_chance death_chance')
+    et = (1 - DIS - DEATH)
+    et_est = 0
+    start_year = worker.start_work.year  # save the year started working
+    for year in range(worker.yearsToWork):
+        current_age = get_current_age(worker, start_year + year)
+        dis_values = sum(param.departure_probabilities(current_age))
+        death_table = param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age]
+        et_dict = {
+            DIS: dis_values,
+            DEATH: death_table
+        }
+        et_est += et.subs(et_dict)
+
+    et_est = round(et_est)
+    worker.eT = param.interest_rate[et_est]
 
     CCV, DR, CSC, BP = symbols('Current_Compensation_Value Discount_Rate Current_Service_Cost Benefits_Paid')
     eq = (CCV * DR) + ((CSC - BP) * (DR / 2))
 
     ci_dict = {
         CCV: worker.CCV,
-        DR: discount_rate,
+        DR: worker.eT,
         CSC: worker.CSC,
-        BP: benefits_paid
+        BP: worker.benefits_paid
     }
 
     # For one worker
     interest = eq.subs(ci_dict)
+    worker.cost_of_capitalization = interest
     print_res('Current interest: ', interest)
 
     return interest

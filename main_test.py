@@ -8,6 +8,17 @@ from definitions import none_value as nv
 import definitions as de
 import data_input as di
 from datetime import datetime
+from print_colors import col
+
+
+def check_art14(worker_test):
+    """
+    Check if the specific worker needs actuarial calculation. If he has 100% article 14 no calculation needed.
+    """
+    if worker_test.start_work == worker_test.start_article14 and worker_test.article14 == 0:
+        return False
+    else:
+        return True
 
 
 def convert_data_to_obj(data):
@@ -53,11 +64,35 @@ print(workers)
 #                    death=0.0001, resignation=0.1, dismissal=0.05,
 #                    pay_rise=0.04)
 param = parameters()
-# param.create_discount_rates_external(0.001, 0.15, 0.002)
-eq.calculate_current_compensation_value(employee_list[2], param)
-eq.current_service_cost(employee_list[2], float(datetime.now().strftime('%j'))/366)
 eq.calculate_benefits_paid(employee_list)
+
+
+# Specific worker testing
+def test_worker(worker_test):
+    if check_art14(worker_test):
+        eq.calculate_current_compensation_value(worker_test, param)
+        eq.current_service_cost(worker_test, float(datetime.now().strftime('%j')) / 366)
+        eq.calculate_interest_for_one_worker(worker_test, param)
+
+
+# param.create_discount_rates_external(0.001, 0.15, 0.002)
+def run_dataSet(employee_list_loop):
+    for workerId in employee_list_loop:
+        if check_art14(workerId):
+            try:
+                eq.calculate_current_compensation_value(workerId, param)
+                eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
+                eq.calculate_interest_for_one_worker(workerId, param)
+            except Exception as e:
+                print(f'{col.FAIL}{e}{col.ENDC}')
+                print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')
+                x = input(f'{col.OKGREEN}Press SPACE+ENTER to continue{col.ENDC}')
+
+
 # endregion
+
+# test_worker(employee_list[1])
+run_dataSet(employee_list)
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)

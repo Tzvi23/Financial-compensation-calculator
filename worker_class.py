@@ -65,6 +65,8 @@ class worker:
         # Calculations Results
         self.CCV = -1  # Current Compensation Value
         self.CSC = -1  # Current Service Cost
+        self.eT = -1
+        self.cost_of_capitalization = -1
 
         # Run Calc functions
         self.calc_seniority()
