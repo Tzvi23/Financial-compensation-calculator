@@ -57,7 +57,7 @@ class worker:
             self.article14 = a_14  # Except tuples ((years, 1 - percentage), (years, 1 - percentage) ,.. )
         self.seniority = seniority  # Int - number of years on the job
         self.wage = wage  # Int/Float
-        self.retirementAge = retirementAge
+        self.retirementAge = 67 if self.gender == 0 else 64
         self.service_expectancy = 0
         self.yearsToWork = 0
         self.age = 0

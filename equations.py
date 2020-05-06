@@ -63,6 +63,9 @@ def calculate_current_compensation_value(worker, param):
     est = 0
     for c_t in range(worker.yearsToWork):
         sub_dict[t] = c_t  # Update t value
+        sub_dict[q] = param.departure_probabilities(worker.age + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
+        sub_dict[RES] = param.departure_probabilities(worker.age + c_t)[1]  # Resignation probability | Update the value in proportion to age change
+        sub_dict[d] = param.male_deathTable[worker.age + c_t] if worker.gender == 0 else param.female_deathTable[worker.age + c_t]  # death probability | Update the value in proportion to age change
         sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
         res = float(formula.subs(sub_dict))  # Calculate value
         # print(res)
