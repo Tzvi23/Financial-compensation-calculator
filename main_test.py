@@ -91,8 +91,8 @@ def run_dataSet(employee_list_loop):
 
 # endregion
 
-# test_worker(employee_list[1])
-run_dataSet(employee_list)
+test_worker(employee_list[1])
+# run_dataSet(employee_list)
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)

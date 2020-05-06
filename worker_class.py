@@ -61,6 +61,7 @@ class worker:
         self.service_expectancy = 0
         self.yearsToWork = 0
         self.age = 0
+        self.age_startWork = 0
         self.benefits_paid = 0
         # Calculations Results
         self.CCV = -1  # Current Compensation Value
@@ -73,6 +74,7 @@ class worker:
         self.calc_yearsToWork()
         self.calc_age()
         self.calc_benefits()
+        self.calc_age_startWork()
 
     # Calculate function
     def calc_service_expectancy(self, prob_death, resignation, dismissal, currentAge):
@@ -93,6 +95,9 @@ class worker:
 
     def calc_benefits(self):
         self.benefits_paid = self.paymentFromProperty + self.check
+
+    def calc_age_startWork(self):
+        self.age_startWork = self.start_work.year - self.birthday.year
 
     # region Setters
     def set_id(self, w_id):
