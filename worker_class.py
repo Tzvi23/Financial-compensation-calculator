@@ -63,6 +63,7 @@ class worker:
         self.age = 0
         self.age_startWork = 0
         self.benefits_paid = 0
+        self.epoch2_date = None
         # Calculations Results
         self.CCV = -1  # Current Compensation Value
         self.CSC = -1  # Current Service Cost

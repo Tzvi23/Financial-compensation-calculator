@@ -70,29 +70,33 @@ eq.calculate_benefits_paid(employee_list)
 # Specific worker testing
 def test_worker(worker_test):
     if check_art14(worker_test):
-        eq.calculate_current_compensation_value(worker_test, param)
+        eq.calculate_complex_current_compensation_value(worker_test, param)
         eq.current_service_cost(worker_test, float(datetime.now().strftime('%j')) / 366)
         eq.calculate_interest_for_one_worker(worker_test, param)
 
 
 # param.create_discount_rates_external(0.001, 0.15, 0.002)
 def run_dataSet(employee_list_loop):
+    global skip_ids
     for workerId in employee_list_loop:
+        if workerId.id in skip_ids:
+            continue
         if check_art14(workerId):
-            try:
-                eq.calculate_current_compensation_value(workerId, param)
-                eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
-                eq.calculate_interest_for_one_worker(workerId, param)
-            except Exception as e:
-                print(f'{col.FAIL}{e}{col.ENDC}')
-                print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')
-                x = input(f'{col.OKGREEN}Press SPACE+ENTER to continue{col.ENDC}')
+            # try:
+            eq.calculate_complex_current_compensation_value(workerId, param)
+            eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
+            eq.calculate_interest_for_one_worker(workerId, param)
+            # except Exception as e:
+            #     print(f'{col.FAIL}{e}{col.ENDC}')
+            #     print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')
+            #     x = input(f'{col.OKGREEN}Press SPACE+ENTER to continue{col.ENDC}')
 
 
 # endregion
 
-test_worker(employee_list[1])
-# run_dataSet(employee_list)
+# test_worker(employee_list[3])
+skip_ids = [49, 64, 111, 117, 118, 122]
+run_dataSet(employee_list)
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)

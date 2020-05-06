@@ -6,11 +6,37 @@ def print_res(message, res):
     """ Prints the result with color """
     print(f'{col.OKBLUE}{message}: {res}{col.ENDC}')
 
+
 # region ========================= MAIN PART 1 =========================
+def calculate_complex_current_compensation_value(worker, param):
+    if worker.start_article14 is None or worker.start_work == worker.start_article14:
+        # If worker have a resignation date the calculation needed to be just for the time that he worked
+        if worker.resignation_date is not None:
+            epoch = worker.resignation_date.year - worker.start_work.year
+            epoch_result = calculate_current_compensation_value(worker, param, epoch, 2)
+            worker.CCV = epoch_result
+        else:
+            # Calculation of the time until retirement
+            calculate_current_compensation_value(worker, param)
+    else:
+        # Separate the sigma calculation to 2 epochs
+        # 1st - Calculate the value form start of work until start article 14
+        epoch1 = worker.start_article14.year - worker.start_work.year
+        epoch1_result = calculate_current_compensation_value(worker, param, epoch1, 1)
+        epoch2_result = 0  # declaration
+        # 2st - Calculate the value from start of article 14 until resignation date
+        if worker.resignation_date is not None:
+            epoch2 = worker.resignation_date.year - worker.start_article14.year
+            epoch2_result = calculate_current_compensation_value(worker, param, epoch2, 2)
+        else:
+            # If the worker working until retirement age
+            epoch2 = worker.birthday.year + worker.retirementAge - worker.start_article14.year
+            epoch2_result = calculate_current_compensation_value(worker, param, epoch2, 2)
+        worker.CCV = epoch1_result + epoch2_result  # sum the results of the 2 epochs and store in worker object
 
 
 # region <!--- PART 1 : Current compensation value  ---!>
-def calculate_current_compensation_value(worker, param):
+def calculate_current_compensation_value(worker, param, epoch=None, num=None):
     """
     Calculating the current compensation value based on long equation.
     To build the final equation the function uses 3 part equation.
@@ -61,11 +87,29 @@ def calculate_current_compensation_value(worker, param):
     formula = part1 + part2 + part3
     # print(formula)
     est = 0
-    for c_t in range(worker.yearsToWork):
+    # Regular calculation
+    if epoch is None:
+        numberOfYears = worker.yearsToWork
+        startWorkAge = worker.age_startWork
+    elif num == 1:
+        # Complex calculation
+        startWorkAge = worker.age_startWork
+        numberOfYears = epoch
+        sub_dict[ART14_1] = 0
+        sub_dict[ART14_2] = 0
+    elif num == 2:
+        if worker.start_article14 is not None:
+            startWorkAge = worker.start_article14.year - worker.birthday.year
+        else:
+            startWorkAge = worker.age_startWork
+        numberOfYears = epoch
+        sub_dict[ART14_1] = worker.article14
+        sub_dict[ART14_2] = worker.article14
+    for c_t in range(numberOfYears):
         sub_dict[t] = c_t  # Update t value
-        sub_dict[q] = param.departure_probabilities(worker.age_startWork + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
-        sub_dict[RES] = param.departure_probabilities(worker.age_startWork + c_t)[1]  # Resignation probability | Update the value in proportion to age change
-        sub_dict[d] = param.male_deathTable[worker.age_startWork + c_t] if worker.gender == 0 else param.female_deathTable[worker.age_startWork + c_t]  # death probability | Update the value in proportion to age change
+        sub_dict[q] = param.departure_probabilities(startWorkAge + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
+        sub_dict[RES] = param.departure_probabilities(startWorkAge + c_t)[1]  # Resignation probability | Update the value in proportion to age change
+        sub_dict[d] = param.male_deathTable[startWorkAge + c_t] if worker.gender == 0 else param.female_deathTable[startWorkAge + c_t]  # death probability | Update the value in proportion to age change
         sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
         res = float(formula.subs(sub_dict))  # Calculate value
         # print(res)
