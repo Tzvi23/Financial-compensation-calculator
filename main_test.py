@@ -8,7 +8,7 @@ from definitions import none_value as nv
 import definitions as de
 import data_input as di
 from datetime import datetime
-from print_colors import col
+import pandas as pd
 
 
 def check_art14(worker_test):
@@ -97,6 +97,35 @@ def run_dataSet(employee_list_loop):
 # test_worker(employee_list[3])
 skip_ids = [49, 64, 111, 117, 118, 122]
 run_dataSet(employee_list)
+print(employee_list)
+
+
+def output_results(employees, filename):
+    def create_col_list(employee):
+        cols = list(vars(employee).keys())
+        col_remove = ['CSC', 'eT', 'cost_of_capitalization', 'complex_a_14', 'retirementReason', 'service_expectancy', 'epoch2_date']
+        for index_name in col_remove:
+            cols.remove(index_name)
+        return cols
+
+    df = pd.DataFrame([vars(s) for s in employee_list], columns=create_col_list(employees[0]))
+
+    # Change format for the dates : remove 00:00:00
+    date_cols = ['birthday', 'start_work', 'start_article14', 'resignation_date']
+    for col in date_cols:
+        df[col] = [time.date() for time in df[col]]
+    # Change female male
+    df['gender'] = df['gender'].map({0: 'M', 1: 'F'})
+    # Remove -1
+    df = df.replace(-1, 0)
+
+    # Write to df to excel file
+    df.to_excel(filename, index=False)
+    print(df.head())
+
+
+output_results(employee_list, 'output_Text2.xlsx')
+
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)
