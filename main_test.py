@@ -108,23 +108,33 @@ def output_results(employees, filename):
             cols.remove(index_name)
         return cols
 
-    df = pd.DataFrame([vars(s) for s in employee_list], columns=create_col_list(employees[0]))
+    employees_df = pd.DataFrame([vars(s) for s in employee_list], columns=create_col_list(employees[0]))
 
+    # region Employee list
     # Change format for the dates : remove 00:00:00
     date_cols = ['birthday', 'start_work', 'start_article14', 'resignation_date']
     for col in date_cols:
-        df[col] = [time.date() for time in df[col]]
+        employees_df[col] = [time.date() for time in employees_df[col]]
     # Change female male
-    df['gender'] = df['gender'].map({0: 'M', 1: 'F'})
+    employees_df['gender'] = employees_df['gender'].map({0: 'M', 1: 'F'})
     # Remove -1
-    df = df.replace(-1, 0)
+    employees_df = employees_df.replace(-1, 0)
+    # endregion
+
+    # region info summary
+    # Summary info
+    total_ccv = sum([w.CCV for w in employees])
+    summary_dict = {'Field': ['ערך נוכחי התחייבות - יתרת סגירה'], 'Value': [total_ccv]}
+    summary_df = pd.DataFrame(summary_dict)
+    # endregion
 
     # Write to df to excel file
-    df.to_excel(filename, index=False)
-    print(df.head())
+    with pd.ExcelWriter(filename) as writer:
+        employees_df.to_excel(writer, sheet_name='Employee list', index=False)
+        summary_df.to_excel(writer, sheet_name='Total info', index=False)
 
 
-output_results(employee_list, 'output_Text2.xlsx')
+output_results(employee_list, 'output_Text3.xlsx')
 
 
 """

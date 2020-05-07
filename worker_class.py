@@ -65,7 +65,7 @@ class worker:
         self.benefits_paid = 0
         self.epoch2_date = None
         # Calculations Results
-        self.CCV = -1  # Current Compensation Value
+        self.CCV = 0  # Current Compensation Value
         self.CSC = -1  # Current Service Cost
         self.eT = -1
         self.cost_of_capitalization = -1
