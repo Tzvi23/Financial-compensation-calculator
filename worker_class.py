@@ -3,6 +3,7 @@ Worker class
 Contains the basic data regarding each worker
 """
 from datetime import datetime
+import pandas as pd
 
 
 class worker:
@@ -33,7 +34,10 @@ class worker:
         self.start_work = start_work
         self.start_article14 = start_art14
         self.deposit = deposit
-        self.resignation_date = res_date
+        if res_date is not None:
+            self.resignation_date = res_date
+        elif ret_reason is not None and res_date is None:
+            self.resignation_date = pd.Timestamp(datetime(2019, 6, 30))
         if payment_from_prop is None:
             self.paymentFromProperty = 0
         else:
