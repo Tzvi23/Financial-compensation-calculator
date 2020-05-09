@@ -38,6 +38,8 @@ class worker:
             self.resignation_date = res_date
         elif ret_reason is not None and res_date is None:
             self.resignation_date = pd.Timestamp(datetime(2019, 6, 30))
+        else:
+            self.resignation_date = None
         if payment_from_prop is None:
             self.paymentFromProperty = 0
         else:

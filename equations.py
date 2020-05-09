@@ -98,7 +98,9 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
         sub_dict[ART14_1] = 0
         sub_dict[ART14_2] = 0
     elif num == 2:
-        if worker.start_article14 is not None:
+        if worker.start_article14 is not None and worker.article14 == 0:
+            return 0
+        elif worker.start_article14 is not None:
             startWorkAge = worker.start_article14.year - worker.birthday.year
         else:
             startWorkAge = worker.age_startWork

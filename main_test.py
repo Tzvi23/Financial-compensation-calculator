@@ -83,6 +83,9 @@ def run_dataSet(employee_list_loop):
             continue
         if check_art14(workerId):
             # try:
+            # [Hackaton] Dont do calculations for workers that left the organization
+            if workerId.retirementReason is not None and workerId.resignation_date.year < datetime.now().year:
+                continue
             eq.calculate_complex_current_compensation_value(workerId, param)
             eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
             eq.calculate_interest_for_one_worker(workerId, param)
