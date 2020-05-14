@@ -79,8 +79,8 @@ def test_worker(worker_test):
 def run_dataSet(employee_list_loop):
     global skip_ids
     for workerId in employee_list_loop:
-        if workerId.id in skip_ids:
-            continue
+        # if workerId.id in skip_ids:
+        #     continue
         if check_art14(workerId):
             # try:
             # [Hackaton] Dont do calculations for workers that left the organization
@@ -98,7 +98,7 @@ def run_dataSet(employee_list_loop):
 # endregion
 
 # test_worker(employee_list[3])
-skip_ids = [49, 64, 111, 117, 118, 122]
+skip_ids = [49, 64, 117, 118, 122]
 run_dataSet(employee_list)
 print(employee_list)
 
