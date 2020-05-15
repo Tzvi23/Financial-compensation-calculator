@@ -1,43 +1,84 @@
 from sympy import *
 from print_colors import col
+import numpy as np
 
 
 def print_res(message, res):
     """ Prints the result with color """
     print(f'{col.OKBLUE}{message}: {res}{col.ENDC}')
 
+
 # region ========================= MAIN PART 1 =========================
+def calculate_complex_current_compensation_value(worker, param):
+    # If worker age larger than retirement age check for seniority and pay
+    if worker.age > worker.retirementAge:
+        if worker.seniority >= 10:
+            worker.CCV = worker.wage * worker.seniority * 1.1
+        else:
+            worker.CCV = worker.wage * worker.seniority
+    # Regular calculation
+    elif worker.start_article14 is None or worker.start_work == worker.start_article14:
+        # If worker have a resignation date the calculation needed to be just for the time that he worked
+        if worker.resignation_date is not None:
+            epoch = worker.resignation_date.year - worker.start_work.year
+            epoch_result = calculate_current_compensation_value(worker, param, epoch, 2)
+            worker.CCV = epoch_result
+        else:
+            # Calculation of the time until retirement
+            calculate_current_compensation_value(worker, param)
+    else:
+        # Separate the sigma calculation to 2 epochs
+        # 1st - Calculate the value form start of work until start article 14
+        epoch1 = worker.start_article14.year - worker.start_work.year
+        epoch1_result = calculate_current_compensation_value(worker, param, epoch1, 1)
+        epoch2_result = 0  # declaration
+        # 2st - Calculate the value from start of article 14 until resignation date
+        if worker.resignation_date is not None:
+            epoch2 = worker.resignation_date.year - worker.start_article14.year
+            epoch2_result = calculate_current_compensation_value(worker, param, epoch2, 2)
+        else:
+            # If the worker working until retirement age
+            epoch2 = worker.birthday.year + worker.retirementAge - worker.start_article14.year
+            epoch2_result = calculate_current_compensation_value(worker, param, epoch2, 2)
+        worker.CCV = epoch1_result + epoch2_result  # sum the results of the 2 epochs and store in worker object
 
 
 # region <!--- PART 1 : Current compensation value  ---!>
-def calculate_current_compensation_value(worker, param):
+def calculate_current_compensation_value(worker, param, epoch=None, num=None):
+    def calc_chance_to_stay(cur_worker, calc_year, chances, params, start_work_age):
+        if calc_year == 0 and not chances:
+            return 1, chances
+        current_chance = 1 - (params.departure_probabilities(start_work_age + calc_year)[0] + params.departure_probabilities(start_work_age + calc_year)[1] + params.male_deathTable[start_work_age + calc_year] if worker.gender == 0 else params.female_deathTable[start_work_age + calc_year])
+        chances.append(current_chance)
+        return np.prod(chances), chances
+
     """
     Calculating the current compensation value based on long equation.
     To build the final equation the function uses 3 part equation.
     After the calculation finished the results is set to worker object - worker.CCV
     """
-    LS, SEN, SGR, RET, DISR, t, p, q, ART14_1 = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1')
-    part1 = LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p**t * q) / ((1 + DISR) ** (t + 0.5)))
+    LS, SEN, SGR, RET, DISR, t, p, q, ART14_1, COMP, p_stay = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1 company chance_to_stay')
+    part1 = (LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p_stay * q) / ((1 + DISR) ** (t + 0.5)))) * COMP
     # print(part1)
 
     POS, RES = symbols('Property Resignation')
-    part2 = POS * p * RES
+    part2 = POS * p_stay * RES
     # print(part2)
 
-    d, SEN2, ART14_2 = symbols('death Seniority2 Article14_1')
-    part3 = LS * SEN2 * ART14_2 * (((1 + SGR) ** (t + 0.5) * p ** t * d) / ((1 + DISR) ** (t + 0.5)))
+    d, SEN2, ART14_2, COMP = symbols('death Seniority2 Article14_1 company')
+    part3 = (LS * SEN2 * ART14_2 * (((1 + SGR) ** (t + 0.5) * p_stay * d) / ((1 + DISR) ** (t + 0.5)))) * COMP
     # print(part3)
 
     # region Load values
     LS_VAL = worker.wage  # LastSalary
     SEN_VAL = worker.seniority  # Seniority
     RET_VAL = worker.retirementAge  # retirement_age
-    SGR_VAL = param.pay_rise_rate  # Salary_Growth_Rate
-    p_VAL = 1 - (param.dismissal + param.resignation + param.prob_death)  # p -  stay on the job probability
-    q_VAL = param.dismissal  # q - fired from the job probability
+    SGR_VAL = param.pay_rise  # Salary_Growth_Rate
+    p_VAL = 1 - (param.departure_probabilities(worker.age)[0] + param.departure_probabilities(worker.age)[1] + param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age])  # p -  stay on the job probability
+    q_VAL = param.departure_probabilities(worker.age)[0]  # q - fired from the job probability
     POS_VAL = worker.property  # Property
-    d_VAL = param.prob_death  # death probability
-    RES_VAL = param.resignation  # Resignation probability
+    d_VAL = param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age]  # death probability
+    RES_VAL = param.departure_probabilities(worker.age)[1]  # Resignation probability
     ART14_VAL = worker.article14  # article 14 percentage
 
     sub_dict = dict()  # declaration
@@ -54,16 +95,46 @@ def calculate_current_compensation_value(worker, param):
             d: d_VAL,
             RES: RES_VAL,
             ART14_1: ART14_VAL,
-            ART14_2: ART14_VAL
+            ART14_2: ART14_VAL,
+            COMP: 1,
+            p_stay: 1
         }
     # endregion
 
     formula = part1 + part2 + part3
     # print(formula)
     est = 0
-    for c_t in range(worker.retirementAge):
+    startWorkAge = None  # declaration
+    # Regular calculation
+    if epoch is None:
+        numberOfYears = worker.yearsToWork
+        startWorkAge = worker.age_startWork
+    elif num == 1:
+        # Complex calculation
+        startWorkAge = worker.age_startWork
+        numberOfYears = epoch
+        sub_dict[ART14_1] = 0
+        sub_dict[ART14_2] = 0
+    elif num == 2:
+        if worker.start_article14 is not None and worker.article14 == 0:
+            return 0
+        elif worker.start_article14 is not None:
+            startWorkAge = worker.start_article14.year - worker.birthday.year
+        else:
+            startWorkAge = worker.age_startWork
+        numberOfYears = epoch
+        sub_dict[ART14_1] = worker.article14
+        sub_dict[ART14_2] = worker.article14
+    chance_to_stay = list()
+    for c_t in range(numberOfYears):
+        if c_t > 10:
+            sub_dict[COMP] = 1.1
+        sub_dict[p_stay], chance_to_stay = calc_chance_to_stay(worker, c_t, chance_to_stay, param, startWorkAge)
         sub_dict[t] = c_t  # Update t value
-        sub_dict[DISR] = param.discount_rates[c_t + 1]  # Update discount rate value by params values
+        sub_dict[q] = param.departure_probabilities(startWorkAge + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
+        sub_dict[RES] = param.departure_probabilities(startWorkAge + c_t)[1]  # Resignation probability | Update the value in proportion to age change
+        sub_dict[d] = param.male_deathTable[startWorkAge + c_t] if worker.gender == 0 else param.female_deathTable[startWorkAge + c_t]  # death probability | Update the value in proportion to age change
+        sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
         res = float(formula.subs(sub_dict))  # Calculate value
         # print(res)
         est += res  # sum all values
@@ -100,7 +171,7 @@ def current_service_cost(worker, partOfYear):
     AF_dict = {
         LS: worker.wage,
         SEN: worker.seniority,
-        ART14: worker.article14,
+        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
         CCV: worker.CCV
     }
 
@@ -110,7 +181,7 @@ def current_service_cost(worker, partOfYear):
     CSC_dict = {
         LS: worker.wage,
         POY: partOfYear,
-        ART14: worker.article14,
+        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
         AF: CALC_AF
     }
 
@@ -123,26 +194,47 @@ def current_service_cost(worker, partOfYear):
 
 
 # region <!--- PART 3 : Interest (Capitalization) ---!>
-def calculate_interest(worker, param, benefits_paid, discount_rate):
+def calculate_interest_for_one_worker(worker, param):
     # TODO change worker to workers => supposed to be calculation on number of workers just add a loop afterwards
     """
     # TODO check how the E(t) needed in the equation calc
     Calculates the E(t) of the worker
     worker.calc_service_expectancy(param.prob_death, param.resignation, param.dismissal, currentAge=20)
     """
+    def get_current_age(cur_worker, cur_year):
+        return cur_year - cur_worker.birthday.year
+
+    # Calculate E(t) function
+    DIS, DEATH = symbols('dismissal_chance death_chance')
+    et = (1 - DIS - DEATH)
+    et_est = 0
+    start_year = worker.start_work.year  # save the year started working
+    for year in range(worker.yearsToWork):
+        current_age = get_current_age(worker, start_year + year)
+        dis_values = sum(param.departure_probabilities(current_age))
+        death_table = param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age]
+        et_dict = {
+            DIS: dis_values,
+            DEATH: death_table
+        }
+        et_est += et.subs(et_dict)
+
+    et_est = round(et_est)
+    worker.eT = param.interest_rate[et_est]
 
     CCV, DR, CSC, BP = symbols('Current_Compensation_Value Discount_Rate Current_Service_Cost Benefits_Paid')
     eq = (CCV * DR) + ((CSC - BP) * (DR / 2))
 
     ci_dict = {
         CCV: worker.CCV,
-        DR: discount_rate,
+        DR: worker.eT,
         CSC: worker.CSC,
-        BP: benefits_paid
+        BP: worker.benefits_paid
     }
 
     # For one worker
     interest = eq.subs(ci_dict)
+    worker.cost_of_capitalization = interest
     print_res('Current interest: ', interest)
 
     return interest
@@ -150,7 +242,12 @@ def calculate_interest(worker, param, benefits_paid, discount_rate):
 
 
 # region <!--- PART4 : Benefits paid ---!>
-# TODO write function that sums all the benefits paid to all workers
+def calculate_benefits_paid(workers_list):
+    est = 0
+    for worker in workers_list:
+        est += worker.benefits_paid
+    print_res('Benefits Paid: ', est)
+    return est
 # endregion
 
 
