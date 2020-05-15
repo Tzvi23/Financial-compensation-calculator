@@ -77,9 +77,9 @@ class worker:
         self.cost_of_capitalization = -1
 
         # Run Calc functions
+        self.calc_age()
         self.calc_seniority()
         self.calc_yearsToWork()
-        self.calc_age()
         self.calc_benefits()
         self.calc_age_startWork()
 
@@ -91,7 +91,7 @@ class worker:
 
     def calc_yearsToWork(self):
         retirement_year = self.birthday.year + self.retirementAge
-        self.yearsToWork = retirement_year - self.start_work.year
+        self.yearsToWork = retirement_year - (self.birthday.year + self.age)
 
     def calc_seniority(self):
         today = datetime.now().year

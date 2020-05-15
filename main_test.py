@@ -87,8 +87,8 @@ def run_dataSet(employee_list_loop):
             if workerId.retirementReason is not None and workerId.resignation_date.year < datetime.now().year:
                 continue
             eq.calculate_complex_current_compensation_value(workerId, param)
-            eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
-            eq.calculate_interest_for_one_worker(workerId, param)
+            # eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)  # TODO equation 2
+            # eq.calculate_interest_for_one_worker(workerId, param)  # TODO equation 3
             # except Exception as e:
             #     print(f'{col.FAIL}{e}{col.ENDC}')
             #     print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')

@@ -1,5 +1,6 @@
 from sympy import *
 from print_colors import col
+import numpy as np
 
 
 def print_res(message, res):
@@ -44,21 +45,28 @@ def calculate_complex_current_compensation_value(worker, param):
 
 # region <!--- PART 1 : Current compensation value  ---!>
 def calculate_current_compensation_value(worker, param, epoch=None, num=None):
+    def calc_chance_to_stay(cur_worker, calc_year, chances, params, start_work_age):
+        if calc_year == 0 and not chances:
+            return 1, chances
+        current_chance = 1 - (params.departure_probabilities(start_work_age + calc_year)[0] + params.departure_probabilities(start_work_age + calc_year)[1] + params.male_deathTable[start_work_age + calc_year] if worker.gender == 0 else params.female_deathTable[start_work_age + calc_year])
+        chances.append(current_chance)
+        return np.prod(chances), chances
+
     """
     Calculating the current compensation value based on long equation.
     To build the final equation the function uses 3 part equation.
     After the calculation finished the results is set to worker object - worker.CCV
     """
-    LS, SEN, SGR, RET, DISR, t, p, q, ART14_1, COMP = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1 company')
-    part1 = (LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p ** t * q) / ((1 + DISR) ** (t + 0.5)))) * COMP
+    LS, SEN, SGR, RET, DISR, t, p, q, ART14_1, COMP, p_stay = symbols('LastSalary Seniority1 Salary_Growth_Rate retirement_age Discount_Rate t p q Article14_1 company chance_to_stay')
+    part1 = (LS * SEN * ART14_1 * ((((1 + SGR) ** (t + 0.5)) * p_stay * q) / ((1 + DISR) ** (t + 0.5)))) * COMP
     # print(part1)
 
     POS, RES = symbols('Property Resignation')
-    part2 = POS * p * RES
+    part2 = POS * p_stay * RES
     # print(part2)
 
     d, SEN2, ART14_2, COMP = symbols('death Seniority2 Article14_1 company')
-    part3 = (LS * SEN2 * ART14_2 * (((1 + SGR) ** (t + 0.5) * p ** t * d) / ((1 + DISR) ** (t + 0.5)))) * COMP
+    part3 = (LS * SEN2 * ART14_2 * (((1 + SGR) ** (t + 0.5) * p_stay * d) / ((1 + DISR) ** (t + 0.5)))) * COMP
     # print(part3)
 
     # region Load values
@@ -88,13 +96,15 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
             RES: RES_VAL,
             ART14_1: ART14_VAL,
             ART14_2: ART14_VAL,
-            COMP: 1
+            COMP: 1,
+            p_stay: 1
         }
     # endregion
 
     formula = part1 + part2 + part3
     # print(formula)
     est = 0
+    startWorkAge = None  # declaration
     # Regular calculation
     if epoch is None:
         numberOfYears = worker.yearsToWork
@@ -115,9 +125,11 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
         numberOfYears = epoch
         sub_dict[ART14_1] = worker.article14
         sub_dict[ART14_2] = worker.article14
+    chance_to_stay = list()
     for c_t in range(numberOfYears):
         if c_t > 10:
             sub_dict[COMP] = 1.1
+        sub_dict[p_stay], chance_to_stay = calc_chance_to_stay(worker, c_t, chance_to_stay, param, startWorkAge)
         sub_dict[t] = c_t  # Update t value
         sub_dict[q] = param.departure_probabilities(startWorkAge + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
         sub_dict[RES] = param.departure_probabilities(startWorkAge + c_t)[1]  # Resignation probability | Update the value in proportion to age change
