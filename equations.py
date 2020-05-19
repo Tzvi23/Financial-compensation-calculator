@@ -171,7 +171,7 @@ def current_service_cost(worker, partOfYear):
     AF_dict = {
         LS: worker.wage,
         SEN: worker.seniority,
-        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
+        ART14: worker.article14 if worker.article14 != 0 else 0,
         CCV: worker.CCV
     }
 
@@ -181,7 +181,7 @@ def current_service_cost(worker, partOfYear):
     CSC_dict = {
         LS: worker.wage,
         POY: partOfYear,
-        ART14: worker.article14 + 1 if worker.article14 != 0 else 0,
+        ART14: worker.article14 if worker.article14 != 0 else 0,
         AF: CALC_AF
     }
 
