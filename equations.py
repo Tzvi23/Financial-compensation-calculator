@@ -289,27 +289,25 @@ def calculate_closing_balance(workers):
 
 
 # region <!--- Part 2 Expected return on plan assets ---!>
-def calculate_expected_return(worker, FVP_OB_VAR, discount_Rate, deposit_to_plan, benefits_paid):
+def calculate_expected_return(worker, FVP_OB_VAR):
     """
     This function calculates for !one! worker.
     :param worker: current one worker
     :param FVP_OB_VAR: Fair value of plan assets opening balance
-    :param discount_Rate: Discount Rate
-    :param deposit_to_plan: Deposits to plan
-    :param benefits_paid: Benefits Paid
     """
     FVP_OB, DR, DP, BP = symbols('Fair_Value Discount_Rate Deposits_To_Plan Benefits_Paid')
     eq = FVP_OB * DR + ((DP - BP) * (DR / 2))
 
     eq_dict = {
         FVP_OB: FVP_OB_VAR,
-        DR: discount_Rate,
-        DP: deposit_to_plan,
-        BP: benefits_paid
+        DR: worker.eT,
+        DP: worker.deposit,
+        BP: worker.benefits_paid
     }
 
-    res = eq.subs(eq_dict)
-    print_res('Calculated expected return for one employee: ', res)
+    res = float(eq.subs(eq_dict))
+    print_res('Calculated expected return: ', res)
+    worker.expected_return = res
 
     return res
 # endregion

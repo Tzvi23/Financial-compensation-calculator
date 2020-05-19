@@ -89,6 +89,7 @@ def run_dataSet(employee_list_loop):
             eq.calculate_complex_current_compensation_value(workerId, param)
             eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
             eq.calculate_interest_for_one_worker(workerId, param)
+            eq.calculate_expected_return(workerId, FVP_OB_VAR=0)  # TODO: update the FVP variable שווי הוגן של נכסי התוכנית יתרת פתיחה
             # except Exception as e:
             #     print(f'{col.FAIL}{e}{col.ENDC}')
             #     print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')
@@ -132,6 +133,7 @@ def output_results(employees, filename):
     total_csc = float(sum([w.CSC for w in employees]))
     total_cost_of_capitalization = float(sum([w.cost_of_capitalization for w in employees]))
     total_benefits_paid = float(eq.calculate_benefits_paid(employees))
+    total_expected_return = float(sum([w.expected_return for w in employees]))
     summary_dict = {'Field':
                         ['ערך נוכחי התחייבות - יתרת פתיחה',
                          'עלות שירות שוטף',
@@ -156,7 +158,7 @@ def output_results(employees, filename):
                          total_ccv,
                          0,
                          1,
-                         1,
+                         total_expected_return,
                          1,
                          1,
                          1,

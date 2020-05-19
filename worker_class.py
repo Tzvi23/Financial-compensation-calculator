@@ -75,6 +75,7 @@ class worker:
         self.CSC = -1  # Current Service Cost
         self.eT = -1
         self.cost_of_capitalization = -1
+        self.expected_return = 0
 
         # Run Calc functions
         self.calc_age()
