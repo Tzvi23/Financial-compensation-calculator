@@ -295,6 +295,11 @@ def calculate_expected_return(worker, FVP_OB_VAR):
     :param worker: current one worker
     :param FVP_OB_VAR: Fair value of plan assets opening balance
     """
+    if worker.eT <= 0:
+        print(f'{col.FAIL} E(t) less than 1 cannot calculate expected return{col.ENDC}')
+        worker.expected_return = 0
+        return 0
+
     FVP_OB, DR, DP, BP = symbols('Fair_Value Discount_Rate Deposits_To_Plan Benefits_Paid')
     eq = FVP_OB * DR + ((DP - BP) * (DR / 2))
 
@@ -314,12 +319,12 @@ def calculate_expected_return(worker, FVP_OB_VAR):
 
 
 # region <!--- Part 3 Deposits to plan assets ---!>
-# TODO sum all deposits for all the workers
+# Moved to summary info part
 # endregion
 
 
 # region <!--- Part 4 Benefits paid from plan assets ---!>
-# TODO sum all the benefits that been paid to workers that left
+# Moved to summary info part
 # endregion
 
 
@@ -339,5 +344,5 @@ def calculate_actuarial_gains(FVP_CB, FVP_OB, ERPS, DPA, BP):
 
 
 # region <!--- Part 6 Fair value of plan assets closing balance ---!>
-# TODO sum all the assets for all the employees
+# Moved to summary info part
 # endregion

@@ -133,7 +133,13 @@ def output_results(employees, filename):
     total_csc = float(sum([w.CSC for w in employees]))
     total_cost_of_capitalization = float(sum([w.cost_of_capitalization for w in employees]))
     total_benefits_paid = float(eq.calculate_benefits_paid(employees))
+    # part 2
+    # שווי הוגן של נכסי התוכנית - יתרת פתיחה
+    FVP_CB = 1
     total_expected_return = float(sum([w.expected_return for w in employees]))
+    total_deposit = float(sum([w.deposit for w in employees]))
+    total_benefits_from_dep = float(sum([w.paymentFromProperty for w in employees]))
+    total_fair_value = float(sum([w.deposit for w in employees]))
     summary_dict = {'Field':
                         ['ערך נוכחי התחייבות - יתרת פתיחה',
                          'עלות שירות שוטף',
@@ -157,12 +163,12 @@ def output_results(employees, filename):
                                                        total_benefits_paid)),
                          total_ccv,
                          0,
-                         1,
+                         FVP_CB,
                          total_expected_return,
-                         1,
-                         1,
-                         1,
-                         1]}
+                         total_deposit,
+                         total_benefits_from_dep,
+                         total_fair_value,
+                         float(eq.calculate_actuarial_gains(total_fair_value, FVP_CB, total_expected_return, total_deposit, total_benefits_from_dep))]}
     summary_df = pd.DataFrame(summary_dict)
     # endregion
 
