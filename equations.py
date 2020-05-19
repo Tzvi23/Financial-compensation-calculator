@@ -204,6 +204,11 @@ def calculate_interest_for_one_worker(worker, param):
     def get_current_age(cur_worker, cur_year):
         return cur_year - cur_worker.birthday.year
 
+    if worker.yearsToWork < 1:
+        print(f'{col.FAIL}Years to work less then 1. Sets interest to 0 for this worker.{col.ENDC}')
+        worker.cost_of_capitalization = 0
+        return 0
+
     # Calculate E(t) function
     DIS, DEATH = symbols('dismissal_chance death_chance')
     et = (1 - DIS - DEATH)
@@ -233,7 +238,7 @@ def calculate_interest_for_one_worker(worker, param):
     }
 
     # For one worker
-    interest = eq.subs(ci_dict)
+    interest = float(eq.subs(ci_dict))
     worker.cost_of_capitalization = interest
     print_res('Current interest: ', interest)
 
@@ -252,16 +257,16 @@ def calculate_benefits_paid(workers_list):
 
 
 # region <!--- PART5 : Actuarial losses ---!>
-def calculate_actuarial_losses(CCCB, CCV, CSC, INTEREST, BP):
+def calculate_actuarial_losses(CCOB, CCCB, CSC, INTEREST, BP):
     """
+    :param CCOB: Current Compensation Opening Balance
     :param CCCB: Current Compensation Closing Balance
-    :param CCV: Current Compensation Values
     :param CSC: Current Service Cost
     :param INTEREST: Interest (Part3)
     :param BP: Benefits Paid
     :return: Actuarial Losses float value
     """
-    return CCCB - CCV - CSC - INTEREST + BP
+    return CCCB - CCOB - CSC - INTEREST + BP
 # endregion
 
 
@@ -297,7 +302,7 @@ def calculate_expected_return(worker, FVP_OB_VAR, discount_Rate, deposit_to_plan
     eq = FVP_OB * DR + ((DP - BP) * (DR / 2))
 
     eq_dict = {
-        # TODO define FVP_OB = ???
+        FVP_OB: FVP_OB_VAR,
         DR: discount_Rate,
         DP: deposit_to_plan,
         BP: benefits_paid

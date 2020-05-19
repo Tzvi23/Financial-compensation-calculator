@@ -88,7 +88,7 @@ def run_dataSet(employee_list_loop):
                 continue
             eq.calculate_complex_current_compensation_value(workerId, param)
             eq.current_service_cost(workerId, float(datetime.now().strftime('%j')) / 366)
-            # eq.calculate_interest_for_one_worker(workerId, param)  # TODO equation 3
+            eq.calculate_interest_for_one_worker(workerId, param)
             # except Exception as e:
             #     print(f'{col.FAIL}{e}{col.ENDC}')
             #     print(f'{col.FAIL}WorkerID: {workerId.id}{col.ENDC}')
@@ -106,7 +106,7 @@ print(employee_list)
 def output_results(employees, filename):
     def create_col_list(employee):
         cols = list(vars(employee).keys())
-        col_remove = ['CSC', 'eT', 'cost_of_capitalization', 'complex_a_14', 'retirementReason', 'service_expectancy', 'epoch2_date']
+        col_remove = ['CSC', 'eT', 'complex_a_14', 'retirementReason', 'service_expectancy', 'epoch2_date']
         for index_name in col_remove:
             cols.remove(index_name)
         return cols
@@ -124,10 +124,43 @@ def output_results(employees, filename):
     employees_df = employees_df.replace(-1, 0)
     # endregion
 
+    # ערך נוכחי התחייבות - יתרת פתיחה
+    CCV_open = 0
     # region info summary
     # Summary info
-    total_ccv = sum([w.CCV for w in employees])
-    summary_dict = {'Field': ['ערך נוכחי התחייבות - יתרת סגירה'], 'Value': [total_ccv]}
+    total_ccv = float(sum([w.CCV for w in employees]))
+    total_csc = float(sum([w.CSC for w in employees]))
+    total_cost_of_capitalization = float(sum([w.cost_of_capitalization for w in employees]))
+    total_benefits_paid = float(eq.calculate_benefits_paid(employees))
+    summary_dict = {'Field':
+                        ['ערך נוכחי התחייבות - יתרת פתיחה',
+                         'עלות שירות שוטף',
+                         'עלות ההיוון (interest cost)',
+                         'הטבות ששולמו',
+                         'הפסדים (רווחים) אקטואריים (P.N)',
+                         'ערך נוכחי התחייבות - יתרת סגירה',
+                         ' ',
+                         'שווי הוגן של נכסי התוכנית - יתרת פתיחה',
+                         'תשואה צפויה על נכסי התוכנית',
+                         'הפקדות לנכסי התוכנית',
+                         'הטבות ששולמו מנכסי התוכנית',
+                         'רווחים (הפסדים) אקטואריים (P.N)',
+                         'שווי הוגן של נכסי התוכנית - יתרת סגירה'],
+                    'Value':
+                        [CCV_open,
+                         total_csc,
+                         total_cost_of_capitalization,
+                         total_benefits_paid,
+                         float(eq.calculate_actuarial_losses(total_ccv, CCV_open, total_csc, total_cost_of_capitalization,
+                                                       total_benefits_paid)),
+                         total_ccv,
+                         0,
+                         1,
+                         1,
+                         1,
+                         1,
+                         1,
+                         1]}
     summary_df = pd.DataFrame(summary_dict)
     # endregion
 
@@ -138,7 +171,6 @@ def output_results(employees, filename):
 
 
 output_results(employee_list, 'output_second_stage.xlsx')
-
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)
