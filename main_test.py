@@ -139,7 +139,7 @@ def output_results(employees, filename):
     total_expected_return = float(sum([w.expected_return for w in employees]))
     total_deposit = float(sum([w.deposit for w in employees]))
     total_benefits_from_dep = float(sum([w.paymentFromProperty for w in employees]))
-    total_fair_value = float(sum([w.deposit for w in employees]))
+    total_fair_value = float(sum([w.property for w in employees]))
     summary_dict = {'Field':
                         ['ערך נוכחי התחייבות - יתרת פתיחה',
                          'עלות שירות שוטף',
@@ -167,8 +167,10 @@ def output_results(employees, filename):
                          total_expected_return,
                          total_deposit,
                          total_benefits_from_dep,
-                         total_fair_value,
-                         float(eq.calculate_actuarial_gains(total_fair_value, FVP_CB, total_expected_return, total_deposit, total_benefits_from_dep))]}
+                         float(eq.calculate_actuarial_gains(total_fair_value, FVP_CB, total_expected_return,
+                                                            total_deposit, total_benefits_from_dep)),
+                         total_fair_value
+                         ]}
     summary_df = pd.DataFrame(summary_dict)
     # endregion
 

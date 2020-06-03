@@ -230,6 +230,7 @@ def calculate_interest_for_one_worker(worker, param):
     CCV, DR, CSC, BP = symbols('Current_Compensation_Value Discount_Rate Current_Service_Cost Benefits_Paid')
     eq = (CCV * DR) + ((CSC - BP) * (DR / 2))
 
+    # TODO: change the CCV value to opening CCV value
     ci_dict = {
         CCV: worker.CCV,
         DR: worker.eT,
