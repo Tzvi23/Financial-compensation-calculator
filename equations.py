@@ -1,7 +1,8 @@
 from sympy import *
 from print_colors import col
 import numpy as np
-
+import os
+import csv
 
 def print_res(message, res):
     """ Prints the result with color """
@@ -48,7 +49,7 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
     def calc_chance_to_stay(cur_worker, calc_year, chances, params, start_work_age):
         if calc_year == 0 and not chances:
             return 1, chances
-        current_chance = 1 - (params.departure_probabilities(start_work_age + calc_year)[0] + params.departure_probabilities(start_work_age + calc_year)[1] + params.male_deathTable[start_work_age + calc_year] if worker.gender == 0 else params.female_deathTable[start_work_age + calc_year])
+        current_chance = 1 - (params.departure_probabilities(start_work_age + calc_year)[0] + params.departure_probabilities(start_work_age + calc_year)[1] + params.male_deathTable[start_work_age + calc_year - 18] if worker.gender == 0 else params.female_deathTable[start_work_age + calc_year - 18])
         chances.append(current_chance)
         return np.prod(chances), chances
 
@@ -77,9 +78,9 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
     p_VAL = 1 - (param.departure_probabilities(worker.age)[0] + param.departure_probabilities(worker.age)[1] + param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age])  # p -  stay on the job probability
     q_VAL = param.departure_probabilities(worker.age)[0]  # q - fired from the job probability
     POS_VAL = worker.property  # Property
-    d_VAL = param.male_deathTable[worker.age] if worker.gender == 0 else param.female_deathTable[worker.age]  # death probability
+    d_VAL = param.male_deathTable[worker.age - 18] if worker.gender == 0 else param.female_deathTable[worker.age - 18]  # death probability
     RES_VAL = param.departure_probabilities(worker.age)[1]  # Resignation probability
-    ART14_VAL = worker.article14  # article 14 percentage
+    ART14_VAL = 1 if worker.article14 == 0 else worker.article14  # article 14 percentage
 
     sub_dict = dict()  # declaration
     if worker.complex_a_14 is False:
@@ -108,7 +109,7 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
     # Regular calculation
     if epoch is None:
         numberOfYears = worker.yearsToWork
-        startWorkAge = worker.age_startWork
+        startWorkAge = worker.age
     elif num == 1:
         # Complex calculation
         startWorkAge = worker.age_startWork
@@ -126,18 +127,38 @@ def calculate_current_compensation_value(worker, param, epoch=None, num=None):
         sub_dict[ART14_1] = worker.article14
         sub_dict[ART14_2] = worker.article14
     chance_to_stay = list()
-    for c_t in range(numberOfYears):
-        if c_t > 10:
-            sub_dict[COMP] = 1.1
-        sub_dict[p_stay], chance_to_stay = calc_chance_to_stay(worker, c_t, chance_to_stay, param, startWorkAge)
-        sub_dict[t] = c_t  # Update t value
-        sub_dict[q] = param.departure_probabilities(startWorkAge + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
-        sub_dict[RES] = param.departure_probabilities(startWorkAge + c_t)[1]  # Resignation probability | Update the value in proportion to age change
-        sub_dict[d] = param.male_deathTable[startWorkAge + c_t] if worker.gender == 0 else param.female_deathTable[startWorkAge + c_t]  # death probability | Update the value in proportion to age change
-        sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
-        res = float(formula.subs(sub_dict))  # Calculate value
-        # print(res)
-        est += res  # sum all values
+    if not os.path.exists('ccv_workers'):
+        os.mkdir('ccv_workers')
+    with open(os.path.join('ccv_worker', str(worker.id) + '.csv'), 'w') as worker_file:
+        worker_writer = csv.writer(worker_file, delimiter=',')
+
+        for c_t in range(numberOfYears):
+            if worker.seniority > 10:
+                sub_dict[COMP] = 1.1
+            sub_dict[p_stay], chance_to_stay = calc_chance_to_stay(worker, c_t, chance_to_stay, param, startWorkAge)
+            sub_dict[t] = c_t  # Update t value
+            sub_dict[q] = param.departure_probabilities(startWorkAge + c_t)[0]  # q - fired from the job probability | Update the value in proportion to age change
+            sub_dict[RES] = param.departure_probabilities(startWorkAge + c_t)[1]  # Resignation probability | Update the value in proportion to age change
+            sub_dict[d] = param.male_deathTable[startWorkAge + c_t - 18] if worker.gender == 0 else param.female_deathTable[startWorkAge + c_t - 18]  # death probability | Update the value in proportion to age change
+            sub_dict[DISR] = param.interest_rate[c_t + 1]  # Update discount rate value by params values
+            res1 = float(part1.subs(sub_dict))
+            res2 = float(part2.subs(sub_dict))
+            res3 = float(part3.subs(sub_dict))
+            res = float(formula.subs(sub_dict))  # Calculate value
+            # print(res)
+            est += res  # sum all values
+            worker_writer.writerow([str(c_t), str(res)])
+            """
+            # Add retirement calculation - Testing!
+            if worker.age + c_t + 1 >= worker.retirementAge:
+                sub_dict[q] = 1
+                sub_dict[p_stay], chance_to_stay = calc_chance_to_stay(worker, c_t + 1, chance_to_stay, param, startWorkAge)
+                sub_dict[COMP] = 1
+                res = float(part1.subs(sub_dict))
+                worker_writer.writerow(['Retirement', str(res)])
+                est += res
+            """
+        worker_writer.writerow(['Total', str(est)])
 
     print_res('Calculated CCV - Current Compensation Value', est)
     worker.CCV = est

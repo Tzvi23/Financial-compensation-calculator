@@ -180,7 +180,7 @@ def output_results(employees, filename):
         summary_df.to_excel(writer, sheet_name='Total info', index=False)
 
 
-output_results(employee_list, 'output_second_stage.xlsx')
+output_results(employee_list, 'output_second_stage4.xlsx')
 
 """
 eq.calculate_current_compensation_value(workers['a'], param)
